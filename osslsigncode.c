@@ -3451,7 +3451,8 @@ static int read_token(GLOBAL_OPTIONS *options, ENGINE *engine)
 
     options->pkey = ENGINE_load_private_key(engine, options->keyfile, NULL, NULL);
     /* Free the functional reference from ENGINE_init */
-    ENGINE_finish(engine);
+    // https://github.com/mtrojnar/osslsigncode/issues/316
+    // ENGINE_finish(engine);
     if (!options->pkey) {
         printf("Failed to load private key %s\n", options->keyfile);
         return 0; /* FAILED */
@@ -4175,6 +4176,15 @@ err_cleanup:
     else
         printf(ret ? "Failed\n" : "Succeeded\n");
     free_options(&options);
+    // https://github.com/mtrojnar/osslsigncode/issues/316
+    if((options.p11engine) || (options.p11module)){
+        ENGINE* engine = engine_pkcs11();
+        if(!engine)
+            engine = engine_dynamic(&options);
+        if(engine){
+            ENGINE_finish(engine);
+        }
+    }
     return ret;
 }
 
